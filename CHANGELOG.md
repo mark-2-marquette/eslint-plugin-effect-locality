@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `eslint-plugin-fp-discipline` will be documented in
+All notable changes to `eslint-plugin-effect-locality` will be documented in
 this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -31,4 +31,4 @@ Initial release.
 - Editor integrations that re-lint a single buffer will not see warnings
   from competing owners on disk; run a full project lint.
 
-[0.1.0]: https://example.invalid/eslint-plugin-fp-discipline/releases/tag/v0.1.0
+[0.1.0]: https://example.invalid/eslint-plugin-effect-locality/releases/tag/v0.1.0

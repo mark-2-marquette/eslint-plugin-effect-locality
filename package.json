@@ -1,5 +1,5 @@
 {
-  "name": "eslint-plugin-fp-discipline",
+  "name": "eslint-plugin-effect-locality",
   "version": "0.1.0",
   "description": "ESLint rules that enforce FP discipline around effectful APIs in TypeScript codebases. Working name; see README for naming discussion.",
   "type": "module",

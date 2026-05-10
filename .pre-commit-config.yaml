@@ -1,4 +1,4 @@
-# Pre-commit hooks for eslint-plugin-fp-discipline.
+# Pre-commit hooks for eslint-plugin-effect-locality.
 #
 # Discipline matched to the mtm + aspergillus repos: lint, type-check, test
 # before the commit lands, plus generic hygiene (trailing whitespace, EOF,

@@ -1,14 +1,14 @@
-# eslint-plugin-fp-discipline
+# eslint-plugin-effect-locality
 
 > **Working name.** This plugin's permanent name is unsettled. Candidates so
-> far: `eslint-plugin-fp-discipline` (current), `eslint-plugin-effect-locality`,
+> far: `eslint-plugin-effect-locality` (current), `eslint-plugin-effect-locality`,
 > `eslint-plugin-purity-by-policy`. The shipped name should reflect that this
 > is a *policy enforcement* plugin where the project supplies the catalogue,
 > not a fixed set of "FP rules". Open to suggestions; see the GitHub issues.
 
 ## Purpose
 
-`eslint-plugin-fp-discipline` enforces functional-programming discipline
+`eslint-plugin-effect-locality` enforces functional-programming discipline
 around effectful APIs in TypeScript codebases. Specifically, it catches
 violations that arise when resource-mediated effects (one-shot OS dialogs,
 shared persistent storage, system settings panels) are invoked from more
@@ -55,7 +55,7 @@ recursion, no dynamic allocation after init. Those rules are appropriate
 when the cost of a bug is a deorbit. They are inappropriate for UI
 applications where the cost of over-restriction is feature paralysis.
 
-`fp-discipline` addresses a different problem class: *resource ownership
+This plugin addresses a different problem class: *resource ownership
 in UI/application code*. The motivating bug is the iOS notification
 permission dialog, which the OS only presents once per install. If three
 unrelated React components all call `messaging().requestPermission()`,
@@ -86,7 +86,7 @@ catches the whole class.
 ## Install
 
 ```sh
-npm install --save-dev eslint-plugin-fp-discipline
+npm install --save-dev eslint-plugin-effect-locality
 ```
 
 Peer dependency: `eslint` ^8.57.0 || ^9.0.0.
@@ -96,13 +96,13 @@ Peer dependency: `eslint` ^8.57.0 || ^9.0.0.
 ESLint flat config (`eslint.config.js`):
 
 ```js
-import fpDiscipline from "eslint-plugin-fp-discipline";
+import fpDiscipline from "eslint-plugin-effect-locality";
 
 export default [
   {
-    plugins: { "fp-discipline": fpDiscipline },
+    plugins: { "effect-locality": fpDiscipline },
     rules: {
-      "fp-discipline/single-owner-effectful-symbol": ["error", {
+      "effect-locality/single-owner-effectful-symbol": ["error", {
         effectfulSymbols: [
           {
             // The mtm-mobile motivating case, verbatim.

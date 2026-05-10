@@ -1,4 +1,4 @@
-// Self-linting configuration for eslint-plugin-fp-discipline.
+// Self-linting configuration for eslint-plugin-effect-locality.
 //
 // Two layers:
 //   1. typescript-eslint's recommended-typed config for general TS hygiene.
@@ -19,10 +19,10 @@ export default tseslint.config(
   {
     files: ["src/**/*.ts"],
     plugins: {
-      "fp-discipline": fpDiscipline,
+      "effect-locality": fpDiscipline,
     },
     rules: {
-      "fp-discipline/single-owner-effectful-symbol": [
+      "effect-locality/single-owner-effectful-symbol": [
         "error",
         {
           // The plugin source has no project-internal effectful symbols to

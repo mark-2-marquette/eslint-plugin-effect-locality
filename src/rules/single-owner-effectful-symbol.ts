@@ -99,7 +99,7 @@ function nodeToCanonical(node: TSESTree.Node | null | undefined): string | null 
  * `RuleCreator` requires a URL, give it the repo URL.
  */
 const createRule = ESLintUtils.RuleCreator(
-  () => "https://github.com/vulcanize/eslint-plugin-fp-discipline",
+  () => "https://github.com/mark-2-marquette/eslint-plugin-effect-locality",
 );
 
 export const rule = createRule<[RuleOptions], MessageIds>({

@@ -83,7 +83,7 @@ describe("single-owner-effectful-symbol — cross-file aggregation", () => {
     const config: Linter.Config = {
       files: ["**/*.ts", "**/*.js"],
       plugins: {
-        "fp-discipline": {
+        "effect-locality": {
           // The rule object is structurally compatible with eslint's Rule.RuleModule.
           rules: { "single-owner-effectful-symbol": rule as never },
         },
@@ -93,7 +93,7 @@ describe("single-owner-effectful-symbol — cross-file aggregation", () => {
         sourceType: "module",
       },
       rules: {
-        "fp-discipline/single-owner-effectful-symbol": ["error", options],
+        "effect-locality/single-owner-effectful-symbol": ["error", options],
       },
     };
     return linter.verify(code, [config], filename);

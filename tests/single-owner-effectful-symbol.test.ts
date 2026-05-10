@@ -126,32 +126,69 @@ describe("single-owner-effectful-symbol — cross-file aggregation", () => {
     expect(b[0]?.message).toContain("messaging().requestPermission");
   });
 
-  it("allowList exempts a file from being a competing owner", () => {
+  it("allowList declares the sanctioned owner; other callers fire", () => {
     const linter = makeLinter();
     const opts = {
       effectfulSymbols: [
         {
+          // maxOwners defaults to 1; the allow-listed file IS that owner.
+          // Anyone else calling the symbol is a violation regardless of
+          // visitation order.
           pattern: "messaging().requestPermission",
           allowList: ["/proj/src/B.ts"],
         },
       ],
     };
 
+    // A is visited first but is not the designated owner: warn.
     const a = lint(
       linter,
       `import { messaging } from 'fake'; messaging().requestPermission();`,
       "/proj/src/A.ts",
       opts,
     );
-    expect(a).toEqual([]);
+    expect(a).toHaveLength(1);
+    expect(a[0]?.messageId).toBe("tooManyOwners");
 
+    // B is the designated owner: silent regardless of when it's visited.
     const b = lint(
       linter,
       `import { messaging } from 'fake'; messaging().requestPermission();`,
       "/proj/src/B.ts",
       opts,
     );
-    expect(b, "allow-listed file should not be warned").toEqual([]);
+    expect(b, "allow-listed file is the sanctioned owner").toEqual([]);
+  });
+
+  it("allowList ownership is order-independent (allow-listed file visited last is still owner)", () => {
+    const linter = makeLinter();
+    const opts = {
+      effectfulSymbols: [
+        {
+          pattern: "messaging().requestPermission",
+          allowList: ["/proj/src/owner.ts"],
+        },
+      ],
+    };
+
+    // Visit a non-owner first.
+    const intruder = lint(
+      linter,
+      `import { messaging } from 'fake'; messaging().requestPermission();`,
+      "/proj/src/intruder.ts",
+      opts,
+    );
+    expect(intruder).toHaveLength(1);
+
+    // Now the designated owner — never warn, even though it's visited
+    // after a non-owner has already polluted the registry.
+    const owner = lint(
+      linter,
+      `import { messaging } from 'fake'; messaging().requestPermission();`,
+      "/proj/src/owner.ts",
+      opts,
+    );
+    expect(owner).toEqual([]);
   });
 
   it("maxOwners: 2 permits two owners and warns at the third", () => {

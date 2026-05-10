@@ -131,11 +131,18 @@ export default [
 ];
 ```
 
-The `allowList` entries should be the absolute paths of files that are
-permitted to be (additional) owners — typically resolved via your project's
-build tooling. Any file not in the allow-list that calls a catalogued
-symbol will be reported, in ESLint's traversal order, after the first
-`maxOwners` distinct owners have been seen.
+The `allowList` entries are the absolute paths of files that are the
+*sanctioned owners* of the symbol — typically resolved via your project's
+build tooling. Listed files occupy ownership slots up-front, so they
+never warn regardless of ESLint's file-visitation order. Files that are
+*not* listed compete for whatever slots remain (typically zero, when
+`maxOwners` defaults to 1 and the allowList names the one owner) and
+are reported in visitation order once the budget is exhausted.
+
+`allowList` is a positive ownership declaration, not a get-out-of-jail
+card. Naming a file in the allowList is how the team declares "this is
+the canonical place this effect lives"; everyone else becomes a
+violation.
 
 ## Rules
 
@@ -150,7 +157,8 @@ Warns at every call site of a catalogued effectful symbol after the first
 type SymbolSpec = {
   pattern: string;       // qualified-name pattern (see below)
   maxOwners?: number;    // default 1
-  allowList?: string[];  // absolute file paths exempt from the count
+  allowList?: string[];  // absolute file paths of sanctioned owners
+                         // (occupy slots up-front; never warn)
 };
 type Options = { effectfulSymbols: SymbolSpec[] };
 ```
@@ -180,9 +188,10 @@ maintains a process-level registry of `pattern -> ordered set of files`,
 so within a single `eslint .` invocation it can report later owners.
 But:
 
-1. **Order-dependent.** Whichever file ESLint visits first becomes the
-   sanctioned owner. If you want a specific file to be the owner, name it
-   in `allowList`.
+1. **Order-dependent in the absence of an `allowList`.** Whichever file
+   ESLint visits first becomes the sanctioned owner. To pin ownership
+   independent of visitation order, name the canonical file in
+   `allowList` — listed files occupy slots up-front.
 2. **Editor-integration blind spot.** When an editor re-lints a single
    open buffer, the registry only sees that one file. The rule will not
    fire even if other competing owners exist on disk. Run a full project

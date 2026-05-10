@@ -162,14 +162,29 @@ export const rule = createRule<[RuleOptions], MessageIds>({
         if (sym === undefined) return;
 
         const allowList = sym.allowList ?? [];
-        if (allowList.includes(filename)) return;
-
         const max = sym.maxOwners ?? 1;
+
+        // `allowList` is a positive ownership declaration: listed files
+        // are the sanctioned owners. They occupy slots in the registry
+        // up-front so that *order of file visitation* doesn't determine
+        // who is canonical — the user already decided. Non-listed files
+        // compete for whatever slots remain (typically zero, when
+        // `maxOwners` defaults to 1 and the allowList names that one
+        // owner). This makes the rule do useful work: declaring an owner
+        // makes everyone else a violation.
         let owners = registry.get(canonical);
         if (owners === undefined) {
-          owners = new Set();
+          owners = new Set<string>();
+          for (const allowed of allowList) {
+            owners.add(allowed);
+          }
           registry.set(canonical, owners);
         }
+
+        // A file in the allowList is, by declaration, a sanctioned owner;
+        // never warn against it.
+        if (allowList.includes(filename)) return;
+
         owners.add(filename);
 
         // The first `max` distinct filenames in insertion order are the

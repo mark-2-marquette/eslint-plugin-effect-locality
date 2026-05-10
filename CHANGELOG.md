@@ -4,6 +4,29 @@ All notable changes to `eslint-plugin-effect-locality` will be documented in
 this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed (BREAKING — pre-1.0)
+
+- `allowList` is now a *positive ownership declaration*: listed files
+  occupy ownership slots up-front and never warn, regardless of ESLint's
+  file-visitation order. Non-listed callers of the symbol compete for
+  whatever slots remain (typically zero when `maxOwners` defaults to 1).
+  The previous semantic — listed files were "exempt from the check" but
+  did not consume a slot — turned `allowList` into a no-op for the
+  common case where the goal is to designate a single canonical owner
+  and warn on everyone else. The new semantic is what consumers
+  intuitively expect from "this file is allowed to do this."
+- Widened peer dependency to include ESLint 10.x; added `prepare`
+  script and `default` exports condition so the plugin installs and
+  loads cleanly via `github:`-style installs from a CommonJS config.
+
+### Added (in this delta)
+
+- New test case "allowList ownership is order-independent" verifies a
+  sanctioned owner stays silent even when ESLint visits a non-owner
+  first and pollutes the registry.
+
 ## [0.1.0] — 2026-05-10
 
 Initial release.

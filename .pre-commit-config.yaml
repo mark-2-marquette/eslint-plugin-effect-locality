@@ -1,0 +1,41 @@
+# Pre-commit hooks for eslint-plugin-fp-discipline.
+#
+# Discipline matched to the mtm + aspergillus repos: lint, type-check, test
+# before the commit lands, plus generic hygiene (trailing whitespace, EOF,
+# secret detection).
+#
+# Run locally: `pre-commit run --all-files`.
+# Install once per clone: `pre-commit install`.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  - repo: local
+    hooks:
+      - id: typecheck
+        name: typecheck (tsc --noEmit on src + tests)
+        entry: bash -c 'npx tsc -p tsconfig.test.json'
+        language: system
+        types_or: [ts, tsx]
+        pass_filenames: false
+
+      - id: lint
+        name: eslint (self-lint with the plugin's own rule)
+        entry: bash -c 'npm run build && npx eslint .'
+        language: system
+        types_or: [ts, tsx, javascript]
+        pass_filenames: false
+
+      - id: test
+        name: vitest
+        entry: bash -c 'npx vitest run'
+        language: system
+        types_or: [ts, tsx]
+        pass_filenames: false

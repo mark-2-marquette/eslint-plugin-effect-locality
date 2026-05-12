@@ -6,6 +6,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0]
+
+### Added
+
+- `no-orphan-fallible-effect` rule: catches the fire-and-forget
+  `useEffect(() => { f().then(setX) }, [])` antipattern when the state
+  has a `failed` / `error` variant and no other code path in the
+  component can write to the setter. Drives the stuck-on-failure class
+  of bugs (motivating case: `mobile/App.tsx:148-178` `ConfigGate` in
+  mtm-mobile, where a `/pricing` network blip permanently strands the
+  app on the failure screen).
+
+  Heuristic, name-pattern matching:
+  - `useEffect` with exactly two args, second being `[]`.
+  - Setter is the destructured second element of a `useState<T>(...)`.
+  - `T`'s top-level type-reference name is in `errorTagCatalogue`
+    (default `["RemoteData"]`).
+  - Setter has zero references outside the effect's callback.
+
+  Options: `errorTagCatalogue: string[]`,
+  `setterPattern: string` (regex, default `"^set[A-Z]"`),
+  `retryTriggers: string[]` (reserved for forward-compat).
+
+  No type-checker dependency; works without `parserOptions.project`.
+
 ### Changed (BREAKING — pre-1.0)
 
 - `allowList` is now a *positive ownership declaration*: listed files
@@ -54,4 +79,5 @@ Initial release.
 - Editor integrations that re-lint a single buffer will not see warnings
   from competing owners on disk; run a full project lint.
 
+[0.2.0]: https://example.invalid/eslint-plugin-effect-locality/releases/tag/v0.2.0
 [0.1.0]: https://example.invalid/eslint-plugin-effect-locality/releases/tag/v0.1.0

@@ -146,6 +146,91 @@ violation.
 
 ## Rules
 
+### `no-orphan-fallible-effect`
+
+Catches the fire-and-forget `useEffect(() => { f().then(setX) }, [])`
+antipattern when the state has a `failed` / `error` variant and no other
+code path in the component can write to the setter.
+
+**Motivating case** (`mobile/App.tsx:148-178` in mtm-mobile):
+
+```tsx
+function ConfigGate({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<
+    RemoteData<AppConfig, ConfigError>
+  >({ status: 'loading' });
+
+  useEffect(() => {
+    let mounted = true;
+    bootstrapConfig().then((result) => {
+      if (!mounted) return;
+      setState(result);
+    });
+    return () => { mounted = false; };
+  }, []);
+
+  if (state.status === 'failed') return <ConfigLoadFailedScreen />;
+  // ...
+}
+```
+
+When `bootstrapConfig()` fails (transient network blip, server hiccup),
+`state` settles on `{ status: 'failed', ... }`. The empty-deps `useEffect`
+ran exactly once at mount and will never re-run. Backgrounding +
+foregrounding the app does not retry, because the `AppState` listener
+lives on the success branch. The user is stuck on the failure screen
+until full process kill — a class of stuck-state bugs that is invisible
+in code review but reproduces under any flaky network.
+
+**The rule fires when ALL of the following hold:**
+
+1. `useEffect(callback, [])` — exactly two arguments, second is an empty
+   array literal.
+2. Inside the callback, the setter half of a `useState` destructuring is
+   referenced (called directly, or passed to `.then` / `.catch`, or used
+   inside an `await`-form IIFE).
+3. The setter's `useState<T>(...)` type argument has a top-level type-
+   reference name listed in `errorTagCatalogue` (default `["RemoteData"]`).
+4. No reference to the setter exists *anywhere outside* the effect's
+   callback within the same component — no event-handler `setX(...)`, no
+   focus / foreground hook callback, no prop drill that ends in a call.
+
+**Options:**
+
+```ts
+type Options = {
+  // Type-reference names treated as fallible. The check is on the bare
+  // top-level name; generic args are ignored. Default ["RemoteData"].
+  errorTagCatalogue?: string[];
+  // Regex (as a string) identifying setter names. Default "^set[A-Z]".
+  setterPattern?: string;
+  // Hook names that count as a retry trigger. Reserved for forward-compat;
+  // v1 treats ANY non-effect writer as a retry path. Default:
+  // ["useAppStateBecameActive", "useFocusEffect", "useInterval"].
+  retryTriggers?: string[];
+};
+```
+
+**Configure:**
+
+```js
+"effect-locality/no-orphan-fallible-effect": ["warn", {
+  // Add project-specific async-result type names.
+  errorTagCatalogue: ["RemoteData", "AsyncResult", "Loadable"],
+}],
+```
+
+**Severity ramp.** Land at `warn`, drive existing violations to zero in
+follow-up PRs, then flip to `error`. This matches the flow
+`single-owner-effectful-symbol` followed.
+
+**Out of scope for v1.** Type-aware analysis via `@typescript-eslint`'s
+type checker is a deliberate non-goal: the rule matches type *names*, not
+type *shapes*. A type-aware variant that walks the actual union members
+of the state type (looking for `status: 'failed' | 'error' | 'errored'`)
+is a follow-up; the name-pattern heuristic is sufficient to catch the
+motivating case and similar shapes without depending on `parserOptions.project`.
+
 ### `single-owner-effectful-symbol`
 
 Warns at every call site of a catalogued effectful symbol after the first

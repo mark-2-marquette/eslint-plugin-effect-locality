@@ -6,6 +6,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0]
+
+### Added
+
+Three new rules enforcing the React state-discipline ADR
+(mtm/docs/decisions/2026-05-19-frontend-state-discipline-is-idiomatic-react.md).
+Each is a structural lint for one drift pattern; together they
+foreclose the parallel-state / imperative-effect-trigger / screen-
+local-phase shapes that combine to produce silent-fail UI bugs
+(motivating case: mtm's 09_onboarding CreditScreen "Let's go!"
+silent-fail on 2026-05-19).
+
+- `no-screen-local-phase-state` (Drift Pattern 3): forbids
+  `useState<boolean|string|number>` and `useRef<boolean>(...)` in
+  flow-bearing screen files. Phase belongs to a parent reducer
+  machine; the screen renders as a match over machine state.
+  Catches both explicit `useState<boolean>(false)` and the
+  literal-inferred `useState(false)`. Input-bound state is
+  allow-listed via dataflow: identifiers referenced as the
+  expression of a JSX `value` / `defaultValue` attribute are
+  treated as input bindings and not flagged. Per-line opt-out via
+  `// eslint-disable-next-line ... -- <reason>`; the rule's own
+  comment scan reports `missingDisableReason` on bare disables to
+  enforce the reason discipline.
+
+  Options: `inputBindingAttrs?: string[]` (default
+  `["value","defaultValue"]`), `forbiddenStateTypes?: string[]`
+  (default `["boolean","string","number"]`),
+  `forbiddenRefTypes?: string[]` (default `["boolean"]`).
+
+  Consumer scopes the rule via flat-config `files:` globs (one
+  block for `src/screens/**`, etc.); the rule itself does not
+  hardcode any project layout.
+
+- `prefer-tagged-union-state` (Drift Pattern 1): flags the
+  parallel-state shape — a component containing
+  `useState<boolean>` AND `useState<Error | null>` AND/OR
+  `useState<T | null>(null)`. Suggests refactor to a `useReducer`
+  with a `{ phase: 'idle' | 'loading' | 'error' | 'success' }`
+  tagged-union state. Heuristic shape-detection, not
+  type-checker-driven: false positives are addressed via
+  per-line disable comment + reason.
+
+  Options: `errorTypeNames?: string[]` (default `["Error"]`).
+
+- `no-imperative-effect-trigger` (Drift Pattern 2): flags JSX
+  event-handler attributes (matching `^on[A-Z]` by default) whose
+  inline function body contains `await` OR a `.then(...)` chain on
+  an async call. Dispatch-only handlers, sync handlers, and
+  identifier-bound handlers (out of scope; reviewed at definition
+  site) are silent.
+
+  Options: `handlerNamePattern?: string` (default `"^on[A-Z]"`).
+
+  Suggested refactor: `onPress={() => dispatch({type:'X_TAPPED'})}`
+  + `useEffect(() => { if (state.phase === 'X-ing') { ... } },
+  [state.phase, ...])`.
+
+### Notes
+
+- Each new rule is independently configurable; consumers can adopt
+  one without the others. Severity is the consumer's decision —
+  ADR-2026-05-19 calls for ERROR, but during the per-surface
+  extract phase the ADR explicitly tolerates WARN until the
+  existing-code violations are driven to zero. The flip to ERROR
+  is a follow-up pebble.
+
+- Index now exports five rules (alphabetised:
+  no-imperative-effect-trigger, no-orphan-fallible-effect,
+  no-screen-local-phase-state, prefer-tagged-union-state,
+  single-owner-effectful-symbol).
+
 ## [0.2.0]
 
 ### Added
@@ -79,5 +151,6 @@ Initial release.
 - Editor integrations that re-lint a single buffer will not see warnings
   from competing owners on disk; run a full project lint.
 
+[0.3.0]: https://example.invalid/eslint-plugin-effect-locality/releases/tag/v0.3.0
 [0.2.0]: https://example.invalid/eslint-plugin-effect-locality/releases/tag/v0.2.0
 [0.1.0]: https://example.invalid/eslint-plugin-effect-locality/releases/tag/v0.1.0

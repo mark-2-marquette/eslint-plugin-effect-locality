@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-effect-locality",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "ESLint rules that enforce FP discipline around effectful APIs in TypeScript codebases. Working name; see README for naming discussion.",
   "type": "module",
   "main": "./dist/index.js",
